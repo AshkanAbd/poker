@@ -24,7 +24,7 @@
 
 /* tokens */
 
-%token EOL PRINT VAR TYPEOF DEL
+%token EOL PRINT VAR TYPEOF DEL UNKNOWN_INPUT
 %token IF ELSE ELSE_IF
 %token AND OR
 %token COMPARE_EQU COMPARE_NOT_EQU COMPARE_BIGGER_EQU COMPARE_LITTLE_EQU COMPARE_BIGGER COMPARE_LITTLE
@@ -59,122 +59,86 @@ program :
 	;
 
 term :
-    PRINT '(' compare ')'                               {   $<ast_value>$ = new ast($<ast_value>3, sizeof(*$<ast_value>3));
-                                                            $<ast_value>$->set_condition(PRINT_F);   }
-    | vars                                              {   /* Do nothing vars block will handle it */  }
-    | TYPEOF '(' compare ')'                            {   $<ast_value>$ = new ast($<ast_value>3, sizeof(*$<ast_value>3));
-                                                            $<ast_value>$->set_condition(TYPEOF_F); }
-    | DEL VAR_NAME                                      {   $<ast_value>$ = new ast($<ast_value>2, sizeof(*$<ast_value>2));
-                                                            $<ast_value>$->set_condition(DEL_VAR_F);    }
+    PRINT '(' compare ')'                               {   $<ast_value>$ = left_ast($<ast_value>3, PRINT_F);    }
+    | TYPEOF '(' compare ')'                            {   $<ast_value>$ = left_ast($<ast_value>3, TYPEOF_F);   }
+    | DEL VAR_NAME                                      {   $<ast_value>$ = left_ast1($<str_value>2, DEL_VAR_F); }
+    | vars                                                  /* Do nothing vars block will handle it */
     | if_statement                                          /* Nothing to do if_statement block will handle it */
+    ;
+
+/* just for if , for and while statement */
+term1 :
+    PRINT '(' compare ')' EOL                           {   $<ast_value>$ = left_ast($<ast_value>3, PRINT_F);    }
+    | TYPEOF '(' compare ')' EOL                        {   $<ast_value>$ = left_ast($<ast_value>3, TYPEOF_F);   }
+    | DEL VAR_NAME EOL                                  {   $<ast_value>$ = left_ast1($<str_value>2, DEL_VAR_F); }
+    | vars EOL                                              /* Do nothing vars block will handle it */
+    | if_statement EOL                                      /* Nothing to do if_statement block will handle it */
+    | EOL                                               {   $<ast_value>$ = NULL;                                }
+    | %empty                                            {   $<ast_value>$ = NULL;                                }
     ;
 
 /* IF statement grammar */
 
 if_statement :
-    IF '(' compare ')' else_if_statement
-    | IF '(' compare ')' '{' program '}'
-    else_if_statement ELSE '{' program '}'
+    IF '(' compare ')' '{' term1 '}'                    {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, IF_F);                                }
+    | IF '(' compare ')' '{' term1 '}'
+    ELSE '{' term1 '}'                                  {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, $<ast_value>10, IF_F);                }
+    | IF '(' compare ')' '{' term1 '}'
+    else_if_statement                                   {   $<ast_value>$ = if_ast1($<ast_value>3, $<ast_value>6, $<ast_value>8, IF_F);                }
+    | IF '(' compare ')' '{' term1 '}'
+    else_if_statement ELSE '{' term1 '}'                {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, $<ast_value>11, $<ast_value>8, IF_F); }
     ;
 
 else_if_statement :
-    %empty
-    | ELSE_IF '(' compare ')' '{' program '}'
-    else_if_statement
+    ELSE_IF '(' compare ')' '{' term1 '}'               {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, IF_F);                             }
+    | ELSE_IF '(' compare ')' '{' term1 '}'
+    else_if_statement                                   {   $<ast_value>$ = if_ast1($<ast_value>3, $<ast_value>6, $<ast_value>8, IF_F);             }
     ;
 
 /* READ input grammar */
 read_input :
-    READ_CHAR '(' ')'                                   {   $<ast_value>$ = new ast(READ_CHAR_F);    }
-    | READ_INT '(' ')'                                  {   $<ast_value>$ = new ast(READ_INT_F);    }
-    | READ_DOUBLE '(' ')'                               {   $<ast_value>$ = new ast(READ_DOUBLE_F); }
-    | READ_LINE '(' ')'                                 {   $<ast_value>$ = new ast(READ_LINE_F);   }
-    | READ '(' ')'                                      {   $<ast_value>$ = new ast(READ_WORD_F);   }
+    READ_CHAR '(' ')'                                   {   $<ast_value>$ = flag_ast(READ_CHAR_F);   }
+    | READ_INT '(' ')'                                  {   $<ast_value>$ = flag_ast(READ_INT_F);    }
+    | READ_DOUBLE '(' ')'                               {   $<ast_value>$ = flag_ast(READ_DOUBLE_F); }
+    | READ_LINE '(' ')'                                 {   $<ast_value>$ = flag_ast(READ_LINE_F);   }
+    | READ '(' ')'                                      {   $<ast_value>$ = flag_ast(READ_WORD_F);   }
     ;
 
 /* Variable grammar */
 vars :
-    VAR VAR_NAME '=' compare                            {   $<ast_value>$ = new ast($<str_value>2, sizeof($<str_value>2));
-                                                            $<ast_value>$->set_right($<ast_value>4, sizeof(*$<ast_value>4));
-                                                            $<ast_value>$->set_condition(EQU_NEW_VAR_F);    }
-    | VAR_NAME '=' compare                              {   $<ast_value>$ = new ast($<str_value>1, sizeof($<str_value>1));
-                                                            $<ast_value>$->set_right($<ast_value>3, sizeof(*$<ast_value>3));
-                                                            $<ast_value>$->set_condition(EQU_EXIST_VAR_F);    }
+    VAR VAR_NAME '=' compare                            {   $<ast_value>$ = full_ast1($<str_value>2, $<ast_value>4, EQU_NEW_VAR_F);     }
+    | VAR_NAME '=' compare                              {   $<ast_value>$ = full_ast1($<str_value>1, $<ast_value>3, EQU_EXIST_VAR_F);   }
     ;
 
 /* compare grammar */
 compare:
-    compare COMPARE_EQU compare                         {   $<ast_value>$ = new ast();
-                                                            $<ast_value>$->set_left($<ast_value>1, sizeof(*$<ast_value>1));
-                                                            $<ast_value>$->set_right($<ast_value>3, sizeof(*$<ast_value>3));
-                                                            $<ast_value>$->set_condition(COMPARE_EQU_F);    }
-    | compare COMPARE_NOT_EQU compare                   {   $<ast_value>$ = new ast();
-                                                            $<ast_value>$->set_left($<ast_value>1, sizeof(*$<ast_value>1));
-                                                            $<ast_value>$->set_right($<ast_value>3, sizeof(*$<ast_value>3));
-                                                            $<ast_value>$->set_condition(COMPARE_NOT_EQU_F);    }
-    | compare COMPARE_BIGGER_EQU compare                {   $<ast_value>$ = new ast();
-                                                            $<ast_value>$->set_left($<ast_value>1, sizeof(*$<ast_value>1));
-                                                            $<ast_value>$->set_right($<ast_value>3, sizeof(*$<ast_value>3));
-                                                            $<ast_value>$->set_condition(COMPARE_BIGGER_EQU_F);    }
-    | compare COMPARE_LITTLE_EQU compare                {   $<ast_value>$ = new ast();
-                                                            $<ast_value>$->set_left($<ast_value>1, sizeof(*$<ast_value>1));
-                                                            $<ast_value>$->set_right($<ast_value>3, sizeof(*$<ast_value>3));
-                                                            $<ast_value>$->set_condition(COMPARE_LITTLE_EQU_F);    }
-    | compare COMPARE_BIGGER compare                    {   $<ast_value>$ = new ast();
-                                                            $<ast_value>$->set_left($<ast_value>1, sizeof(*$<ast_value>1));
-                                                            $<ast_value>$->set_right($<ast_value>3, sizeof(*$<ast_value>3));
-                                                            $<ast_value>$->set_condition(COMPARE_BIGGER_F);    }
-    | compare COMPARE_LITTLE compare                    {   $<ast_value>$ = new ast();
-                                                            $<ast_value>$->set_left($<ast_value>1, sizeof(*$<ast_value>1));
-                                                            $<ast_value>$->set_right($<ast_value>3, sizeof(*$<ast_value>3));
-                                                            $<ast_value>$->set_condition(COMPARE_LITTLE_F);    }
-    | compare OR compare                                {   $<ast_value>$ = new ast();
-                                                            $<ast_value>$->set_left($<ast_value>1, sizeof(*$<ast_value>1));
-                                                            $<ast_value>$->set_right($<ast_value>3, sizeof(*$<ast_value>3));
-                                                            $<ast_value>$->set_condition(OR_F);    }
-    | compare AND compare                               {   $<ast_value>$ = new ast();
-                                                            $<ast_value>$->set_left($<ast_value>1, sizeof(*$<ast_value>1));
-                                                            $<ast_value>$->set_right($<ast_value>3, sizeof(*$<ast_value>3));
-                                                            $<ast_value>$->set_condition(AND_F);    }
-    | '(' compare ')'                                   {   $<ast_value>$ = new ast($<ast_value>2, sizeof(*$<ast_value>2));
-                                                            $<ast_value>$->set_condition(PARENTHESES_F);    }
-    | '!' compare                                       {   $<ast_value>$ = new ast($<ast_value>2, sizeof(*$<ast_value>2));
-                                                            $<ast_value>$->set_condition(NOT_F);    }
+    compare COMPARE_EQU compare                         {   $<ast_value>$ = full_ast($<ast_value>1, $<ast_value>3, COMPARE_EQU_F);          }
+    | compare COMPARE_NOT_EQU compare                   {   $<ast_value>$ = full_ast($<ast_value>1, $<ast_value>3, COMPARE_NOT_EQU_F);      }
+    | compare COMPARE_BIGGER_EQU compare                {   $<ast_value>$ = full_ast($<ast_value>1, $<ast_value>3, COMPARE_BIGGER_EQU_F);   }
+    | compare COMPARE_LITTLE_EQU compare                {   $<ast_value>$ = full_ast($<ast_value>1, $<ast_value>3, COMPARE_LITTLE_EQU_F);   }
+    | compare COMPARE_BIGGER compare                    {   $<ast_value>$ = full_ast($<ast_value>1, $<ast_value>3, COMPARE_BIGGER_F);       }
+    | compare COMPARE_LITTLE compare                    {   $<ast_value>$ = full_ast($<ast_value>1, $<ast_value>3, COMPARE_LITTLE_F);       }
+    | compare OR compare                                {   $<ast_value>$ = full_ast($<ast_value>1, $<ast_value>3, OR_F);                   }
+    | compare AND compare                               {   $<ast_value>$ = full_ast($<ast_value>1, $<ast_value>3, AND_F);                  }
+    | '(' compare ')'                                   {   $<ast_value>$ = left_ast($<ast_value>2, PARENTHESES_F);                         }
+    | '!' compare                                       {   $<ast_value>$ = left_ast($<ast_value>2, NOT_F);                                 }
     | exp
     ;
 
 exp :
-    INT                                                 {   $<ast_value>$ = create_int_ast($<int_value>1);    }
-    | DOUBLE                                            {   $<ast_value>$ = create_double_ast($<double_value>1);    }
-    | CHAR                                              {   $<ast_value>$ = create_char_ast($<char_value>1);    }
-    | BOOLEAN                                           {   Type *type = create_bool($<bool_value>1);
-                                                            $<ast_value>$ = new ast(type, sizeof(*type));
-                                                            $<ast_value>$->set_condition(BOOLEAN_F);    }
+    INT                                                 {   $<ast_value>$ = int_ast($<int_value>1);                                 }
+    | DOUBLE                                            {   $<ast_value>$ = double_ast($<double_value>1);                           }
+    | CHAR                                              {   $<ast_value>$ = char_ast($<char_value>1);                               }
+    | BOOLEAN                                           {   $<ast_value>$ = bool_ast($<bool_value>1);                               }
     | read_input
-    | VAR_NAME                                          {   $<ast_value>$ = new ast($<str_value>1, sizeof($<str_value>1));
-                                                            $<ast_value>$->set_condition(VARIABLE_F);   }
-    | VAR_NAME_REF                                      {   $<ast_value>$ = new ast($<str_value>1, sizeof($<str_value>1));
-                                                            $<ast_value>$->set_condition(VARIABLE_REF_F);   }
-    | exp '+' exp                                       {   $<ast_value>$ = new ast($<ast_value>1, sizeof(*$<ast_value>1));
-                                                            $<ast_value>$->set_right($<ast_value>3, sizeof(*$<ast_value>3));
-                                                            $<ast_value>$->set_condition(PLUS_F);   }
-    | exp '-' exp                                       {   $<ast_value>$ = new ast($<ast_value>1, sizeof(*$<ast_value>1));
-                                                            $<ast_value>$->set_right($<ast_value>3, sizeof(*$<ast_value>3));
-                                                            $<ast_value>$->set_condition(MINUS_F);   }
-    | exp '/' exp                                       {   $<ast_value>$ = new ast($<ast_value>1, sizeof(*$<ast_value>1));
-                                                            $<ast_value>$->set_right($<ast_value>3, sizeof(*$<ast_value>3));
-                                                            $<ast_value>$->set_condition(DIVIDE_F);   }
-    | exp '*' exp                                       {   $<ast_value>$ = new ast($<ast_value>1, sizeof(*$<ast_value>1));
-                                                            $<ast_value>$->set_right($<ast_value>3, sizeof(*$<ast_value>3));
-                                                            $<ast_value>$->set_condition(MULTIPLY_F);   }
-    | exp '^' exp                                       {   $<ast_value>$ = new ast($<ast_value>1, sizeof(*$<ast_value>1));
-                                                            $<ast_value>$->set_right($<ast_value>3, sizeof(*$<ast_value>3));
-                                                            $<ast_value>$->set_condition(POW_F);   }
-    | exp '%' exp                                       {   $<ast_value>$ = new ast($<ast_value>1, sizeof(*$<ast_value>1));
-                                                            $<ast_value>$->set_right($<ast_value>3, sizeof(*$<ast_value>3));
-                                                            $<ast_value>$->set_condition(LEFT_OVER_F);   }
-    | '-' exp                                           {   $<ast_value>$ = new ast($<ast_value>2, sizeof(*$<ast_value>2));
-                                                            $<ast_value>$->set_condition(SINGLE_MINUS_F);   }
-    | '+' exp                                           {   $<ast_value>$ = new ast($<ast_value>2, sizeof(*$<ast_value>2));
-                                                            $<ast_value>$->set_condition(SINGLE_PLUS_F);   }
+    | VAR_NAME                                          {   $<ast_value>$ = left_ast1($<str_value>1, VARIABLE_F);                   }
+    | VAR_NAME_REF                                      {   $<ast_value>$ = left_ast1($<str_value>1, VARIABLE_REF_F);               }
+    | exp '+' exp                                       {   $<ast_value>$ = full_ast($<ast_value>1, $<ast_value>3, PLUS_F);         }
+    | exp '-' exp                                       {   $<ast_value>$ = full_ast($<ast_value>1, $<ast_value>3, MINUS_F);        }
+    | exp '/' exp                                       {   $<ast_value>$ = full_ast($<ast_value>1, $<ast_value>3, DIVIDE_F);       }
+    | exp '*' exp                                       {   $<ast_value>$ = full_ast($<ast_value>1, $<ast_value>3, MULTIPLY_F);     }
+    | exp '^' exp                                       {   $<ast_value>$ = full_ast($<ast_value>1, $<ast_value>3, POW_F);          }
+    | exp '%' exp                                       {   $<ast_value>$ = full_ast($<ast_value>1, $<ast_value>3, LEFT_OVER_F);    }
+    | '-' exp                                           {   $<ast_value>$ = left_ast($<ast_value>2, SINGLE_MINUS_F);                }
+    | '+' exp                                           {   $<ast_value>$ = left_ast($<ast_value>2, SINGLE_PLUS_F);                 }
     ;

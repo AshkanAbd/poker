@@ -41,6 +41,18 @@ struct ast {
         ast::while_statement = 0;
     }
 
+    ast(void *left, size_t left_size, int condition) {
+        ast::left = malloc(left_size);
+        memcpy(ast::left, left, left_size);
+        ast::left_flag = 1;
+        ast::condition = condition;
+        ast::right = malloc(0);
+        ast::right_flag = 0;
+        ast::if_statement = 0;
+        ast::for_statement = 0;
+        ast::while_statement = 0;
+    }
+
     ast(int condition) {
         ast::condition = condition;
         ast::left = malloc(0);
@@ -90,12 +102,16 @@ struct ast {
         ast::right = malloc(0);
         ast::right_flag = 0;
     }
+
+    virtual ~ast() {
+    }
 };
 
 // ast structure for if statement
 struct ast_if : ast {
     void *if_condition;
     void *if_program;
+    int if_program_flag;
     void *else_program;
     int else_flag;
     void *else_if_program;
@@ -104,6 +120,7 @@ struct ast_if : ast {
     ast_if() {
         initialize_ast();
         ast::if_statement = 1;
+        ast_if::if_program_flag = 0;
         ast_if::else_flag = 0;
         ast_if::else_if_flag = 0;
         ast_if::if_condition = malloc(0);
@@ -113,26 +130,23 @@ struct ast_if : ast {
     }
 
     void set_if_condition(void *condition, size_t condition_size) {
-        free(ast_if::if_condition);
         ast_if::if_condition = malloc(condition_size);
         memcpy(ast_if::if_condition, condition, condition_size);
     }
 
     void set_if_program(void *program, size_t program_size) {
-        free(ast_if::if_program);
-        ast_if::if_condition = malloc(program_size);
+        ast_if::if_program = malloc(program_size);
         memcpy(ast_if::if_program, program, program_size);
+        ast_if::if_program_flag = 1;
     }
 
     void set_else(void *else_program, size_t else_program_size) {
-        free(ast_if::else_program);
         ast_if::else_program = malloc(else_program_size);
         memcpy(ast_if::else_program, else_program, else_program_size);
         ast_if::else_flag = 1;
     }
 
     void set_else_if(void *else_if_program, size_t else_if_size) {
-        free(ast_if::else_if_program);
         ast_if::else_if_program = malloc(else_if_size);
         memcpy(ast_if::else_if_program, else_if_program, else_if_size);
         ast_if::else_if_flag = 1;
@@ -147,6 +161,4 @@ struct ast_if : ast {
         ast::for_statement = 0;
         ast::while_statement = 0;
     }
-
-
 };

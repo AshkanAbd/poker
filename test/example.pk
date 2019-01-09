@@ -1,0 +1,11 @@
+var a = read_double();
+var b = read_double();
+if(a == b){
+    print('=');
+} else {
+    if (a > b){
+        print('>');
+    } else if (a < b) {
+        print('<');
+    };
+};

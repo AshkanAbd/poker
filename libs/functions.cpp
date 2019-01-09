@@ -18,6 +18,8 @@ Type *read_input_exp(ast *ast_value);
 
 int is_compare(ast *ast_value);
 
+void if_statement_ast(ast_if *ast_value);
+
 void print(const char *data) {
     fprintf(stdout, "$> %s\n", data);
 }
@@ -56,8 +58,6 @@ void print_type(Type *type) {
             print("Character");
             break;
         case UNKNOWN:
-            print("UNKNOWN");
-        default:
             print("UNKNOWN");
     }
 }
@@ -139,31 +139,27 @@ Type *read_variable(ast *ast_value) {
 
 // Read single character from input
 Type *read_char() {
-    Type *type = new Type(CHAR_TYPE);
     char *c = (char *) malloc(1 * sizeof(char));
     fprintf(stdout, "--> ");
     fscanf(stdin, "%s", c);
     char c2 = *c;
-    type->set_value(&c2);
-    return type;
+    return new Type(&c2, CHAR_TYPE);
 }
 
 // Read int from input
 Type *read_int() {
     long int i;
+    fprintf(stdout, "--> ");
     fscanf(stdin, "%ld", &i);
-    Type *type = new Type(&i, INTEGER_TYPE);
-    return type;
+    return new Type(&i, INTEGER_TYPE);
 }
 
 // Read double from input
 Type *read_double() {
-    Type *type = new Type(DOUBLE_TYPE);
     double d;
     fprintf(stdout, "--> ");
     fscanf(stdin, "%lf", &d);
-    type->set_value(&d);
-    return type;
+    return new Type(&d, DOUBLE_TYPE);
 }
 
 // todo complete these function after array support

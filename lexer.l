@@ -61,4 +61,6 @@ and                                         { return (AND); }                   
 "("                                         { return (yytext[0]); }
 ")"                                         { return (yytext[0]); }
 "{"                                         { return (yytext[0]); }
+"}"                                         { return (yytext[0]); }
+.                                           { return (UNKNOWN_INPUT); }                   /* Im=nvalid input token */
 %%

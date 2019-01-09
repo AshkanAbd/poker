@@ -10,6 +10,12 @@
 
 void read_ast(ast *ast_value) {
     line_counter++;
+    if (ast_value == NULL)
+        return;
+    if (dynamic_cast<ast_if *>(ast_value)) {
+        if_statement_ast(dynamic_cast<ast_if *>(ast_value));
+        return;
+    }
     if (ast_value->condition == PRINT_F) {
         // Print Info saved in left of AST
         print((ast *) ast_value->left);
@@ -26,6 +32,26 @@ void read_ast(ast *ast_value) {
         // Print type of an exp
         Type *type = read_exp((ast *) ast_value->left);
         print_type(type);
+    }
+}
+
+void if_statement_ast(ast_if *ast_value) {
+    Type *condition_result = read_exp((ast *) ast_value->if_condition);
+    if (condition_result->type != BOOLEAN_TYPE) {
+        yyerror("Invalid condition");
+        return;
+    }
+    bool b = *(bool *) condition_result->value;
+    if (b) {
+        if (ast_value->if_program_flag) {
+            read_ast((ast *) ast_value->if_program);
+        }
+    } else {
+        if (ast_value->else_if_flag) {
+            read_ast((ast *) ast_value->else_if_program);
+        } else if (ast_value->else_flag) {
+            read_ast((ast *) ast_value->else_program);
+        }
     }
 }
 
