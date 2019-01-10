@@ -56,42 +56,48 @@ ast *flag_ast(int flag) {
     return new ast(flag);
 }
 
+ast *if_ast(ast *program, int flag) {
+    ast_if *ast_value = new ast_if;
+    size_t program_size = sizeof(*program);
+    if (dynamic_cast<ast_if *>(program)) {
+        program_size = sizeof(*(dynamic_cast<ast_if *>(program)));
+    }
+    ast_value->set_condition(flag);
+    if (program != NULL) {
+        ast_value->set_if_program(program, program_size);
+    }
+    return ast_value;
+}
+
 ast *if_ast(ast *condition, ast *program, int flag) {
     ast_if *ast_value = new ast_if;
+    size_t program_size = sizeof(*program);
+    if (dynamic_cast<ast_if *>(program)) {
+        program_size = sizeof(*(dynamic_cast<ast_if *>(program)));
+    }
     ast_value->set_condition(flag);
     ast_value->set_if_condition(condition, sizeof(*condition));
-    if (program != NULL)
-        ast_value->set_if_program(program, sizeof(*program));
+    if (program != NULL) {
+        ast_value->set_if_program(program, program_size);
+    }
     return ast_value;
 };
 
-ast *if_ast(ast *condition, ast *program, ast *else_program, int flag) {
+ast *if_ast(ast *condition, ast *program, ast *else_if_program, int flag) {
     ast_if *ast_value = new ast_if;
+    size_t program_size = sizeof(*program);
+    size_t else_if_size = sizeof(*else_if_program);
+    if (dynamic_cast<ast_if *>(program)) {
+        program_size = sizeof(*(dynamic_cast<ast_if *>(program)));
+    }
+    if (dynamic_cast<ast_if *>(else_if_program)) {
+        else_if_size = sizeof(*(dynamic_cast<ast_if *>(else_if_program)));
+    }
     ast_value->set_condition(flag);
     ast_value->set_if_condition(condition, sizeof(*condition));
-    if (program != NULL)
-        ast_value->set_if_program(program, sizeof(*program));
-    ast_value->set_else(else_program, sizeof(*else_program));
-    return ast_value;
-}
-
-ast *if_ast1(ast *condition, ast *program, ast *else_if_program, int flag) {
-    ast_if *ast_value = new ast_if;
-    ast_value->set_condition(flag);
-    ast_value->set_if_condition(condition, sizeof(*condition));
-    if (program != NULL)
-        ast_value->set_if_program(program, sizeof(*program));
-    ast_value->set_else_if(else_if_program, sizeof(*else_if_program));
-    return ast_value;
-}
-
-ast *if_ast(ast *condition, ast *program, ast *else_program, ast *else_if_program, int flag) {
-    ast_if *ast_value = new ast_if;
-    ast_value->set_condition(flag);
-    ast_value->set_if_condition(condition, sizeof(*condition));
-    if (program != NULL)
-        ast_value->set_if_program(program, sizeof(*program));
-    ast_value->set_else(else_program, sizeof(*else_program));
-    ast_value->set_else_if(else_if_program, sizeof(*else_if_program));
+    if (program != NULL) {
+        ast_value->set_if_program(program, program_size);
+    }
+    ast_value->set_else_if(else_if_program, else_if_size);
     return ast_value;
 }

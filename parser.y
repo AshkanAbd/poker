@@ -78,21 +78,24 @@ term1 :
     ;
 
 /* IF statement grammar */
-
 if_statement :
-    IF '(' compare ')' '{' term1 '}'                    {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, IF_F);                                }
+    IF '(' compare ')' '{' term1 '}'                    {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, IF_F);                 }
     | IF '(' compare ')' '{' term1 '}'
-    ELSE '{' term1 '}'                                  {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, $<ast_value>10, IF_F);                }
+    else_if_statement                                   {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, $<ast_value>8, IF_F);  }
     | IF '(' compare ')' '{' term1 '}'
-    else_if_statement                                   {   $<ast_value>$ = if_ast1($<ast_value>3, $<ast_value>6, $<ast_value>8, IF_F);                }
-    | IF '(' compare ')' '{' term1 '}'
-    else_if_statement ELSE '{' term1 '}'                {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, $<ast_value>11, $<ast_value>8, IF_F); }
+    else_statement                                      {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, $<ast_value>8, IF_F);  }
     ;
 
 else_if_statement :
-    ELSE_IF '(' compare ')' '{' term1 '}'               {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, IF_F);                             }
+    ELSE_IF '(' compare ')' '{' term1 '}'               {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, ELSE_IF_F);                }
     | ELSE_IF '(' compare ')' '{' term1 '}'
-    else_if_statement                                   {   $<ast_value>$ = if_ast1($<ast_value>3, $<ast_value>6, $<ast_value>8, IF_F);             }
+    else_statement                                      {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, $<ast_value>8, ELSE_IF_F); }
+    | ELSE_IF '(' compare ')' '{' term1 '}'
+    else_if_statement                                   {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, $<ast_value>8, ELSE_IF_F); }
+    ;
+
+else_statement:
+    ELSE '{' term1 '}'                                  {   $<ast_value>$ = if_ast($<ast_value>3, ELSE_F);      }
     ;
 
 /* READ input grammar */

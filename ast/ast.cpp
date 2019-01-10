@@ -112,44 +112,34 @@ struct ast_if : ast {
     void *if_condition;
     void *if_program;
     int if_program_flag;
-    void *else_program;
-    int else_flag;
     void *else_if_program;
     int else_if_flag;
 
-    ast_if() {
+    ast_if() : ast() {
         initialize_ast();
         ast::if_statement = 1;
-        ast_if::if_program_flag = 0;
-        ast_if::else_flag = 0;
-        ast_if::else_if_flag = 0;
-        ast_if::if_condition = malloc(0);
-        ast_if::if_program = malloc(0);
-        ast_if::else_if_program = malloc(0);
-        ast_if::else_program = malloc(0);
+        this->if_program_flag = 0;
+        this->else_if_flag = 0;
+        this->if_condition = malloc(0);
+        this->if_program = malloc(0);
+        this->else_if_program = malloc(0);
     }
 
     void set_if_condition(void *condition, size_t condition_size) {
-        ast_if::if_condition = malloc(condition_size);
-        memcpy(ast_if::if_condition, condition, condition_size);
+        this->if_condition = malloc(condition_size);
+        memcpy(this->if_condition, condition, condition_size);
     }
 
     void set_if_program(void *program, size_t program_size) {
-        ast_if::if_program = malloc(program_size);
-        memcpy(ast_if::if_program, program, program_size);
-        ast_if::if_program_flag = 1;
-    }
-
-    void set_else(void *else_program, size_t else_program_size) {
-        ast_if::else_program = malloc(else_program_size);
-        memcpy(ast_if::else_program, else_program, else_program_size);
-        ast_if::else_flag = 1;
+        this->if_program = malloc(program_size);
+        memcpy(this->if_program, program, program_size);
+        this->if_program_flag = 1;
     }
 
     void set_else_if(void *else_if_program, size_t else_if_size) {
-        ast_if::else_if_program = malloc(else_if_size);
-        memcpy(ast_if::else_if_program, else_if_program, else_if_size);
-        ast_if::else_if_flag = 1;
+        this->else_if_program = malloc(else_if_size);
+        memcpy(this->else_if_program, else_if_program, else_if_size);
+        this->else_if_flag = 1;
     }
 
     void initialize_ast() {

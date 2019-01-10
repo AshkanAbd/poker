@@ -36,6 +36,10 @@ void read_ast(ast *ast_value) {
 }
 
 void if_statement_ast(ast_if *ast_value) {
+    if (ast_value->condition == ELSE_F) {
+        read_ast((ast *) ast_value->if_program);
+        return;
+    }
     Type *condition_result = read_exp((ast *) ast_value->if_condition);
     if (condition_result->type != BOOLEAN_TYPE) {
         yyerror("Invalid condition");
@@ -49,8 +53,6 @@ void if_statement_ast(ast_if *ast_value) {
     } else {
         if (ast_value->else_if_flag) {
             read_ast((ast *) ast_value->else_if_program);
-        } else if (ast_value->else_flag) {
-            read_ast((ast *) ast_value->else_program);
         }
     }
 }

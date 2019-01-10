@@ -1,11 +1,10 @@
 var a = read_double();
-var b = read_double();
-if(a == b){
+if (a == 5){
     print('=');
-} else {
-    if (a > b){
-        print('>');
-    } else if (a < b) {
+}else{
+    if (a < 5){
         print('<');
+    }else if(a > 5){
+        print('>');
     };
 };
