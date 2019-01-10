@@ -7,10 +7,17 @@
 #include <cstring>
 #include "flags.cpp"
 
-static int line_counter = 0;
+int get_line_number();
+
+void set_line_number(int n);
+
+int RUN_MODE = 0;
 
 void yyerror(const char *s) {
-    fprintf(stdout, "$> [%d]: \"%s\"\n", line_counter, s);
+    fprintf(stdout, "$> [%d]: \"%s\"\n", get_line_number(), s);
+    if (RUN_MODE){
+        exit(1);
+    }
 }
 
 // Structure for basic language Types
@@ -102,4 +109,9 @@ void print_boolean(Type *type) {
 
 void print_unknown(Type *type) {
     fprintf(stdout, "$> %p\n", type->value);
+}
+
+// Check given type is invalid or not
+int invalid_type(Type *type) {
+    return type->type == INVALID ? 1 : 0;
 }

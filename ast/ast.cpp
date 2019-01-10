@@ -107,7 +107,7 @@ struct ast {
     }
 };
 
-// ast structure for if statement
+// AST structure for if statement
 struct ast_if : ast {
     void *if_condition;
     void *if_program;
@@ -116,7 +116,6 @@ struct ast_if : ast {
     int else_if_flag;
 
     ast_if() : ast() {
-        initialize_ast();
         ast::if_statement = 1;
         this->if_program_flag = 0;
         this->else_if_flag = 0;
@@ -141,14 +140,29 @@ struct ast_if : ast {
         memcpy(this->else_if_program, else_if_program, else_if_size);
         this->else_if_flag = 1;
     }
+};
 
-    void initialize_ast() {
-        ast::left = malloc(0);
-        ast::left_flag = 0;
-        ast::right = malloc(0);
-        ast::right_flag = 0;
-        ast::condition = -1;
-        ast::for_statement = 0;
-        ast::while_statement = 0;
+// AST structure for WHILE statement
+struct ast_while : ast {
+    void *program;
+    int program_flag;
+    void *while_condition;
+
+    ast_while() : ast() {
+        this->while_statement = 1;
+        this->program = malloc(0);
+        this->while_condition = malloc(0);
+        this->program_flag = 0;
+    };
+
+    void set_while_program(void *program, size_t program_size) {
+        this->program_flag = 1;
+        this->program = malloc(program_size);
+        memcpy(this->program, program, program_size);
+    }
+
+    void set_while_condition(void *condition, size_t condition_size) {
+        this->while_condition = malloc(condition_size);
+        mempcpy(this->while_condition, condition, condition_size);
     }
 };

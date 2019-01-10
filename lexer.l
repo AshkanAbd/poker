@@ -34,6 +34,8 @@ else                                        { return (ELSE); }                  
 else" "if                                   { return (ELSE_IF); }                   /* Else if token */
 or                                          { return (OR); }                        /* OR token */
 and                                         { return (AND); }                       /* AND token */
+for                                         { return (FOR); }                       /* FOR token */
+while                                       { return (WHILE); }                     /* WHILE token */
 ("\'")(.+)("\'")                            { yylval.char_value = yytext[1];
                                               return (CHAR); }                      /* Character token */
 [0-9]+                                      { yylval.int_value = atoi(yytext);

@@ -48,6 +48,9 @@
 #define IF_F                        10034
 #define ELSE_IF_F                   10035
 #define ELSE_F                      10036
+#define FOR_F                       10037
+#define WHILE_F                     10038
+#define PROGRAM_F                   10039
 
 // Types Flags
 #define INTEGER_TYPE                1000000

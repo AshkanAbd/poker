@@ -25,7 +25,7 @@
 /* tokens */
 
 %token EOL PRINT VAR TYPEOF DEL UNKNOWN_INPUT
-%token IF ELSE ELSE_IF
+%token IF ELSE ELSE_IF WHILE FOR
 %token AND OR
 %token COMPARE_EQU COMPARE_NOT_EQU COMPARE_BIGGER_EQU COMPARE_LITTLE_EQU COMPARE_BIGGER COMPARE_LITTLE
 %token READ_CHAR READ_DOUBLE READ_INT READ_LINE READ
@@ -64,38 +64,40 @@ term :
     | DEL VAR_NAME                                      {   $<ast_value>$ = left_ast1($<str_value>2, DEL_VAR_F); }
     | vars                                                  /* Do nothing vars block will handle it */
     | if_statement                                          /* Nothing to do if_statement block will handle it */
+    | while_statement                                       /* Nothing to do */
     ;
 
-/* just for if , for and while statement */
+/* just for if, for and while statement */
+program1:
+    program1 term1 EOL                                  {   $<ast_value>$ = full_ast($<ast_value>2, $<ast_value>1, PROGRAM_F);              }
+    | program1 EOL
+    | %empty                                            {   $<ast_value>$ = NULL;                                                           }
+
 term1 :
-    PRINT '(' compare ')' EOL                           {   $<ast_value>$ = left_ast($<ast_value>3, PRINT_F);    }
-    | TYPEOF '(' compare ')' EOL                        {   $<ast_value>$ = left_ast($<ast_value>3, TYPEOF_F);   }
-    | DEL VAR_NAME EOL                                  {   $<ast_value>$ = left_ast1($<str_value>2, DEL_VAR_F); }
-    | vars EOL                                              /* Do nothing vars block will handle it */
-    | if_statement EOL                                      /* Nothing to do if_statement block will handle it */
-    | EOL                                               {   $<ast_value>$ = NULL;                                }
-    | %empty                                            {   $<ast_value>$ = NULL;                                }
+    PRINT '(' compare ')'                               {   $<ast_value>$ = left_ast($<ast_value>3, PRINT_F);    }
+    | TYPEOF '(' compare ')'                            {   $<ast_value>$ = left_ast($<ast_value>3, TYPEOF_F);   }
+    | DEL VAR_NAME                                      {   $<ast_value>$ = left_ast1($<str_value>2, DEL_VAR_F); }
+    | vars                                                  /* Do nothing vars block will handle it */
+    | if_statement                                          /* Nothing to do if_statement block will handle it */
+    | while_statement                                       /* Nothing to do */
+    ;
+
+/* WHILE statement grammar */
+while_statement:
+    WHILE '(' compare ')' '{' program1 '}'              {   $<ast_value>$ = while_ast($<ast_value>3, $<ast_value>6, WHILE_F);               }
     ;
 
 /* IF statement grammar */
-if_statement :
-    IF '(' compare ')' '{' term1 '}'                    {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, IF_F);                 }
-    | IF '(' compare ')' '{' term1 '}'
-    else_if_statement                                   {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, $<ast_value>8, IF_F);  }
-    | IF '(' compare ')' '{' term1 '}'
-    else_statement                                      {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, $<ast_value>8, IF_F);  }
+if_statement:
+    IF '(' compare ')' '{' program1 '}'
+    else_if_statement                                   {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, $<ast_value>8, IF_F);      }
     ;
 
-else_if_statement :
-    ELSE_IF '(' compare ')' '{' term1 '}'               {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, ELSE_IF_F);                }
-    | ELSE_IF '(' compare ')' '{' term1 '}'
-    else_statement                                      {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, $<ast_value>8, ELSE_IF_F); }
-    | ELSE_IF '(' compare ')' '{' term1 '}'
+else_if_statement:
+    %empty                                              {   $<ast_value>$ = NULL;                                                           }
+    | ELSE '{' program1 '}'                             {   $<ast_value>$ = if_ast($<ast_value>3, ELSE_F);                                  }
+    | ELSE_IF '(' compare ')' '{' program1 '}'
     else_if_statement                                   {   $<ast_value>$ = if_ast($<ast_value>3, $<ast_value>6, $<ast_value>8, ELSE_IF_F); }
-    ;
-
-else_statement:
-    ELSE '{' term1 '}'                                  {   $<ast_value>$ = if_ast($<ast_value>3, ELSE_F);      }
     ;
 
 /* READ input grammar */

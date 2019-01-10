@@ -7,16 +7,18 @@
 #include <cstring>
 #include "../libs/functions.cpp"
 
-
 void read_ast(ast *ast_value) {
-    line_counter++;
+    set_line_number(get_line_number() + 1);
     if (ast_value == NULL)
         return;
-    if (dynamic_cast<ast_if *>(ast_value)) {
+    if (ast_value->condition == PROGRAM_F) {
+        read_ast((ast *) ast_value->left);
+    } else if (dynamic_cast<ast_if *>(ast_value)) {
         if_statement_ast(dynamic_cast<ast_if *>(ast_value));
         return;
-    }
-    if (ast_value->condition == PRINT_F) {
+    } else if (dynamic_cast<ast_while *>(ast_value)) {
+        while_statement_ast(dynamic_cast<ast_while *>(ast_value));
+    } else if (ast_value->condition == PRINT_F) {
         // Print Info saved in left of AST
         print((ast *) ast_value->left);
     } else if (ast_value->condition == EQU_NEW_VAR_F) {
@@ -35,11 +37,31 @@ void read_ast(ast *ast_value) {
     }
 }
 
+void while_statement_ast(ast_while *ast_value) {
+    ast *program = ast_value->program_flag ? (ast *) ast_value->program : NULL;
+    ast *condition = (ast *) ast_value->while_condition;
+    Type *condition_result;
+    while (true) {
+        condition_result = read_exp(condition);
+        if (condition_result->type != BOOLEAN_TYPE) {
+            yyerror("Invalid condition");
+            return;
+        }
+        if (!(*(bool *) condition_result->value)) {
+            return;
+        }
+        read_statement_ast(program);
+    }
+}
+
 void if_statement_ast(ast_if *ast_value) {
+    // Check AST IF is ELSE or NOT
     if (ast_value->condition == ELSE_F) {
-        read_ast((ast *) ast_value->if_program);
+        // If is ELSE then run and return
+        read_statement_ast((ast *) ast_value->if_program);
         return;
     }
+    // Try to read if (else if) condition and get result
     Type *condition_result = read_exp((ast *) ast_value->if_condition);
     if (condition_result->type != BOOLEAN_TYPE) {
         yyerror("Invalid condition");
@@ -47,13 +69,26 @@ void if_statement_ast(ast_if *ast_value) {
     }
     bool b = *(bool *) condition_result->value;
     if (b) {
+        // If condition is true then run if (else if) program
         if (ast_value->if_program_flag) {
-            read_ast((ast *) ast_value->if_program);
+            read_statement_ast((ast *) ast_value->if_program);
         }
     } else {
+        // If condition is false then read else (else if) AST
         if (ast_value->else_if_flag) {
-            read_ast((ast *) ast_value->else_if_program);
+            read_statement_ast((ast *) ast_value->else_if_program);
         }
+    }
+}
+
+void read_statement_ast(ast *ast_value) {
+    if (ast_value->right_flag) {
+        read_statement_ast((ast *) ast_value->right);
+    }
+    if (ast_value->left_flag) {
+        read_ast((ast *) ast_value->left);
+    } else {
+        read_ast(ast_value);
     }
 }
 

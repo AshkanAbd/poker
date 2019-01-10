@@ -20,6 +20,10 @@ int is_compare(ast *ast_value);
 
 void if_statement_ast(ast_if *ast_value);
 
+void while_statement_ast(ast_while *ast_value);
+
+void read_statement_ast(ast* ast_value);
+
 void print(const char *data) {
     fprintf(stdout, "$> %s\n", data);
 }
@@ -182,6 +186,10 @@ int is_compare(ast *ast_value) {
 
 // logical not ("!") for boolean type only
 Type *not_function(Type *type) {
+    {
+        if (invalid_type(type))
+            return type;
+    }
     if (type->type != BOOLEAN_TYPE) {
         return new Type(INVALID);
     }
@@ -191,6 +199,10 @@ Type *not_function(Type *type) {
 
 // Single operator for types
 Type *single_operator(Type *type1, int flag) {
+    {
+        if (invalid_type(type1))
+            return type1;
+    }
     if (flag == SINGLE_PLUS_F) {
         return type1;
     }
@@ -211,6 +223,12 @@ Type *single_operator(Type *type1, int flag) {
 
 // For change type without reference
 Type *number_operators(Type *type1, Type *type2, int flag) {
+    {
+        if (invalid_type(type1))
+            return type1;
+        if (invalid_type(type2))
+            return type2;
+    }
     switch (flag) {
         case PLUS_F:
             if (type1->type == DOUBLE_TYPE && type2->type == DOUBLE_TYPE) {
@@ -307,6 +325,12 @@ Type *number_operators(Type *type1, Type *type2, int flag) {
 
 // Change type with reference
 Type *number_operators_with_reference(Type *type1, Type *type2, int flag, Type *ref) {
+    {
+        if (invalid_type(type1))
+            return type1;
+        if (invalid_type(type2))
+            return type2;
+    }
     switch (flag) {
         case PLUS_F:
             if (type1->type == DOUBLE_TYPE && type2->type == DOUBLE_TYPE) {
@@ -421,6 +445,12 @@ Type *number_operators_with_reference(Type *type1, Type *type2, int flag, Type *
 // Only integer and double is supported
 // Only == and != is valid for boolean
 Type *compare(Type *type1, Type *type2, int flag) {
+    {
+        if (invalid_type(type1))
+            return type1;
+        if (invalid_type(type2))
+            return type2;
+    }
     bool b = false;
     if (type1->type == BOOLEAN_TYPE && type2->type == BOOLEAN_TYPE) {
         if (flag == COMPARE_EQU_F) {
@@ -511,6 +541,12 @@ Type *compare(Type *type1, Type *type2, int flag) {
 
 // and , or operators only for boolean type
 Type *get_and_or_result(Type *type1, Type *type2, int flag) {
+    {
+        if (invalid_type(type1))
+            return type1;
+        if (invalid_type(type2))
+            return type2;
+    }
     if (type1->type != BOOLEAN_TYPE || type2->type != BOOLEAN_TYPE) {
         yyerror("Invalid operation");
         return new Type(INVALID);
@@ -523,3 +559,4 @@ Type *get_and_or_result(Type *type1, Type *type2, int flag) {
     }
     return new Type(&b, BOOLEAN_TYPE);
 }
+
