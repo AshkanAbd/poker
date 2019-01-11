@@ -7,37 +7,44 @@
 #include <cstring>
 #include "../libs/functions.cpp"
 
-void read_ast(ast *ast_value) {
+// Return 1 for continue
+// Return -1 for break
+// For other Flags return 0
+int read_ast(ast *ast_value) {
     set_line_number(get_line_number() + 1);
     if (ast_value == NULL)
-        return;
+        return 0;
     if (ast_value->condition == PROGRAM_F) {
         read_ast((ast *) ast_value->left);
+    } else if (ast_value->condition == BREAK_F) {
+        return -1;
+    } else if (ast_value->condition == CONTINUE_F) {
+        return 1;
     } else if (dynamic_cast<ast_if *>(ast_value)) {
-        if_statement_ast(dynamic_cast<ast_if *>(ast_value));
-        return;
+        return if_statement_ast(dynamic_cast<ast_if *>(ast_value));
     } else if (dynamic_cast<ast_while *>(ast_value)) {
-        while_statement_ast(dynamic_cast<ast_while *>(ast_value));
+        return while_statement_ast(dynamic_cast<ast_while *>(ast_value));
     } else if (ast_value->condition == PRINT_F) {
         // Print Info saved in left of AST
-        print((ast *) ast_value->left);
+        return print((ast *) ast_value->left);
     } else if (ast_value->condition == EQU_NEW_VAR_F) {
         // Add new variable
-        add_new_variable(ast_value);
+        return add_new_variable(ast_value);
     } else if (ast_value->condition == EQU_EXIST_VAR_F) {
         // Change exist variable
-        change_variable(ast_value);
+        return change_variable(ast_value);
     } else if (ast_value->condition == DEL_VAR_F) {
         // Delete variable
-        delete_variable(ast_value);
+        return delete_variable(ast_value);
     } else if (ast_value->condition == TYPEOF_F) {
         // Print type of an exp
         Type *type = read_exp((ast *) ast_value->left);
-        print_type(type);
+        return print_type(type);
     }
+    return 0;
 }
 
-void while_statement_ast(ast_while *ast_value) {
+int while_statement_ast(ast_while *ast_value) {
     ast *program = ast_value->program_flag ? (ast *) ast_value->program : NULL;
     ast *condition = (ast *) ast_value->while_condition;
     Type *condition_result;
@@ -45,50 +52,71 @@ void while_statement_ast(ast_while *ast_value) {
         condition_result = read_exp(condition);
         if (condition_result->type != BOOLEAN_TYPE) {
             yyerror("Invalid condition");
-            return;
+            return 0;
         }
         if (!(*(bool *) condition_result->value)) {
-            return;
+            return 0;
         }
-        read_statement_ast(program);
+        int status = read_loop_statement_ast(program);
+        if (status == -1) {
+            break;
+        }
     }
+    return 0;
 }
 
-void if_statement_ast(ast_if *ast_value) {
+int if_statement_ast(ast_if *ast_value) {
     // Check AST IF is ELSE or NOT
     if (ast_value->condition == ELSE_F) {
         // If is ELSE then run and return
-        read_statement_ast((ast *) ast_value->if_program);
-        return;
+        return read_if_statement_ast((ast *) ast_value->if_program);
     }
     // Try to read if (else if) condition and get result
     Type *condition_result = read_exp((ast *) ast_value->if_condition);
     if (condition_result->type != BOOLEAN_TYPE) {
         yyerror("Invalid condition");
-        return;
+        return -1;
     }
     bool b = *(bool *) condition_result->value;
     if (b) {
         // If condition is true then run if (else if) program
         if (ast_value->if_program_flag) {
-            read_statement_ast((ast *) ast_value->if_program);
+            return read_if_statement_ast((ast *) ast_value->if_program);
         }
     } else {
         // If condition is false then read else (else if) AST
         if (ast_value->else_if_flag) {
-            read_statement_ast((ast *) ast_value->else_if_program);
+            return read_if_statement_ast((ast *) ast_value->else_if_program);
         }
+    }
+    return 0;
+}
+
+int read_if_statement_ast(ast *ast_value) {
+    if (ast_value->right_flag) {
+        int status = read_if_statement_ast((ast *) ast_value->right);
+        if (status != 0) {
+            return status;
+        }
+    }
+    if (ast_value->left_flag) {
+        return read_ast((ast *) ast_value->left);
+    } else {
+        return read_ast(ast_value);
     }
 }
 
-void read_statement_ast(ast *ast_value) {
+int read_loop_statement_ast(ast *ast_value) {
     if (ast_value->right_flag) {
-        read_statement_ast((ast *) ast_value->right);
+        int status = read_loop_statement_ast((ast *) ast_value->right);
+        if (status != 0) {
+            return status;
+        }
     }
     if (ast_value->left_flag) {
-        read_ast((ast *) ast_value->left);
+        return read_ast((ast *) ast_value->left);
     } else {
-        read_ast(ast_value);
+        return read_ast(ast_value);
     }
 }
 

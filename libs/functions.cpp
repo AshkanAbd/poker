@@ -10,7 +10,7 @@
 
 static Variable variables;
 
-void read_ast(ast *ast_value);
+int read_ast(ast *ast_value);
 
 Type *read_exp(ast *ast_value);
 
@@ -18,21 +18,23 @@ Type *read_input_exp(ast *ast_value);
 
 int is_compare(ast *ast_value);
 
-void if_statement_ast(ast_if *ast_value);
+int if_statement_ast(ast_if *ast_value);
 
-void while_statement_ast(ast_while *ast_value);
+int while_statement_ast(ast_while *ast_value);
 
-void read_statement_ast(ast* ast_value);
+int read_if_statement_ast(ast *ast_value);
+
+int read_loop_statement_ast(ast *ast_value);
 
 void print(const char *data) {
     fprintf(stdout, "$> %s\n", data);
 }
 
-void print(ast *ast_value) {
+int print(ast *ast_value) {
     // Read exp
     Type *type = read_exp(ast_value);
     if (type->type == INVALID)
-        return;
+        return -1;
     if (type->type == DOUBLE_TYPE) {
         print_double(type);
     } else if (type->type == INTEGER_TYPE) {
@@ -45,9 +47,10 @@ void print(ast *ast_value) {
         // For unknown type
         print_unknown(type);
     }
+    return 0;
 }
 
-void print_type(Type *type) {
+int print_type(Type *type) {
     switch (type->type) {
         case DOUBLE_TYPE:
             print("Double");
@@ -63,7 +66,10 @@ void print_type(Type *type) {
             break;
         case UNKNOWN:
             print("UNKNOWN");
+        default:
+            return -1;
     }
+    return 0;
 }
 
 int divide_on_zero(Type *type) {
@@ -81,46 +87,49 @@ int divide_on_zero(Type *type) {
     return 0;
 }
 
-void add_new_variable(ast *ast_value) {
+int add_new_variable(ast *ast_value) {
     // Create VariableName and find index of it in variables
     VariableName *variableName = create_variable_name((char *) ast_value->left);
     int var_index = variables.index(variableName);
     if (var_index != -1) {
         // if variable exist throw exception
         yyerror(strcat((char *) ast_value->left, " : Variable was defined"));
-        return;
+        return -1;
     }
     // else create variable
     Type *type = read_exp((ast *) ast_value->right);
     if (type->type != INVALID) {
         variables.add(variableName, type);
     }
+    return 0;
 }
 
-void change_variable(ast *ast_value) {
+int change_variable(ast *ast_value) {
     // Create VariableName and find index of it in variables
     VariableName *variableName = create_variable_name((char *) ast_value->left);
     int var_index = variables.index(variableName);
     if (var_index == -1) {
         // if variable not exist throw exception
         yyerror(strcat((char *) ast_value->left, " : Undefined variable"));
-        return;
+        return -1;
     }
     // if variable exist update it
     Type *type = read_exp((ast *) ast_value->right);
     if (type->type != INVALID) {
         *((variables.values) + var_index) = *type;
     }
+    return 0;
 }
 
 // Delete a variable from variables
-void delete_variable(ast *ast_value) {
+int delete_variable(ast *ast_value) {
     VariableName *variableName = create_variable_name((char *) ast_value->left);
     if (variables.index(variableName) == -1) {
         yyerror(strcat((char *) ast_value->left, " : Undefined variable"));
-        return;
+        return -1;
     }
     variables.delete_var(variableName);
+    return 0;
 }
 
 // Read variable from gives ast

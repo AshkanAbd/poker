@@ -51,6 +51,8 @@
 #define FOR_F                       10037
 #define WHILE_F                     10038
 #define PROGRAM_F                   10039
+#define BREAK_F                     10040
+#define CONTINUE_F                  10041
 
 // Types Flags
 #define INTEGER_TYPE                1000000

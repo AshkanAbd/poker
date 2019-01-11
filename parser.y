@@ -25,7 +25,7 @@
 /* tokens */
 
 %token EOL PRINT VAR TYPEOF DEL UNKNOWN_INPUT
-%token IF ELSE ELSE_IF WHILE FOR
+%token IF ELSE ELSE_IF WHILE FOR BREAK CONTINUE
 %token AND OR
 %token COMPARE_EQU COMPARE_NOT_EQU COMPARE_BIGGER_EQU COMPARE_LITTLE_EQU COMPARE_BIGGER COMPARE_LITTLE
 %token READ_CHAR READ_DOUBLE READ_INT READ_LINE READ
@@ -80,6 +80,8 @@ term1 :
     | vars                                                  /* Do nothing vars block will handle it */
     | if_statement                                          /* Nothing to do if_statement block will handle it */
     | while_statement                                       /* Nothing to do */
+    | CONTINUE                                          {   $<ast_value>$ = flag_ast(CONTINUE_F);                }
+    | BREAK                                             {   $<ast_value>$ = flag_ast(BREAK_F);                   }
     ;
 
 /* WHILE statement grammar */
