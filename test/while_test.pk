@@ -1,12 +1,24 @@
-var a = -1;
-while (a < 10){
-    a = a + 1;
-    if (a % 2 == b){
-        print('E');
-        print(a);
-    }else{
-        break;
-        print('O');
-        print(a);
+var a;
+while (true){
+    a = read_int();
+    print(a);
+    while (a < 10){
+        print('e');
+        print('?');
+        if (a % 2 ==0){
+            print('y');
+            break;
+        }else{
+            print('n');
+        };
+        print('o');
+        print('?');
+        if (a % 2 == 1){
+            print('y');
+            break 2;
+        }else{
+            print('n');
+        };
+        a = a + 1;
     };
 };

@@ -24,7 +24,7 @@
 
 /* tokens */
 
-%token EOL PRINT VAR TYPEOF DEL UNKNOWN_INPUT
+%token EOL PRINT VAR TYPEOF DEL UNKNOWN_INPUT NULL_T
 %token IF ELSE ELSE_IF WHILE FOR BREAK CONTINUE
 %token AND OR
 %token COMPARE_EQU COMPARE_NOT_EQU COMPARE_BIGGER_EQU COMPARE_LITTLE_EQU COMPARE_BIGGER COMPARE_LITTLE
@@ -65,6 +65,7 @@ term :
     | vars                                                  /* Do nothing vars block will handle it */
     | if_statement                                          /* Nothing to do if_statement block will handle it */
     | while_statement                                       /* Nothing to do */
+    | for_statement                                         /* Nothing to do */
     ;
 
 /* just for if, for and while statement */
@@ -80,8 +81,32 @@ term1 :
     | vars                                                  /* Do nothing vars block will handle it */
     | if_statement                                          /* Nothing to do if_statement block will handle it */
     | while_statement                                       /* Nothing to do */
+    | for_statement                                         /* Nothing to do */
     | CONTINUE                                          {   $<ast_value>$ = flag_ast(CONTINUE_F);                }
+    | BREAK exp                                         {   $<ast_value>$ = left_ast($<ast_value>2, BREAK_F);    }
     | BREAK                                             {   $<ast_value>$ = flag_ast(BREAK_F);                   }
+    ;
+
+/* FOR statement grammar */
+for_statement:
+    FOR '(' for_start EOL for_end
+    EOL for_step ')' '{' program1 '}'                   {   $<ast_value>$ = for_ast($<ast_value>3, $<ast_value>5
+                                                                    , $<ast_value>7, $<ast_value>10, FOR_F);        }
+    ;
+
+for_start:
+    %empty                                              {   $<ast_value>$ = NULL;   }
+    | vars
+    ;
+
+for_end:
+    %empty                                              {   $<ast_value>$ = NULL;   }
+    | compare
+    ;
+
+for_step:
+    %empty                                              {   $<ast_value>$ = NULL;   }
+    | vars
     ;
 
 /* WHILE statement grammar */
@@ -137,6 +162,7 @@ exp :
     | DOUBLE                                            {   $<ast_value>$ = double_ast($<double_value>1);                           }
     | CHAR                                              {   $<ast_value>$ = char_ast($<char_value>1);                               }
     | BOOLEAN                                           {   $<ast_value>$ = bool_ast($<bool_value>1);                               }
+    | NULL_T                                            {   $<ast_value>$ = null_ast();                                             }
     | read_input
     | VAR_NAME                                          {   $<ast_value>$ = left_ast1($<str_value>1, VARIABLE_F);                   }
     | VAR_NAME_REF                                      {   $<ast_value>$ = left_ast1($<str_value>1, VARIABLE_REF_F);               }

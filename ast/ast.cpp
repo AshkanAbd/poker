@@ -166,3 +166,51 @@ struct ast_while : ast {
         mempcpy(this->while_condition, condition, condition_size);
     }
 };
+
+// AST structure for FOR statement
+struct ast_for : ast {
+    void *program;
+    int program_flag;
+    void *start;
+    int start_flag;
+    void *end_condition;
+    int end_flag;
+    void *step;
+    int step_flag;
+
+    ast_for() : ast() {
+        this->for_statement = 1;
+        this->program = malloc(0);
+        this->program_flag = 0;
+        this->start = malloc(0);
+        this->start_flag = 0;
+        this->end_condition = malloc(0);
+        this->end_flag = 0;
+        this->step = malloc(0);
+        this->step_flag = 0;
+    }
+
+    void set_program(void *program, size_t program_size) {
+        this->program = malloc(program_size);
+        memcpy(this->program, program, program_size);
+        this->program_flag = 1;
+    }
+
+    void set_start(void *start, size_t start_size) {
+        this->start = malloc(start_size);
+        memcpy(this->start, start, start_size);
+        this->start_flag = 1;
+    }
+
+    void set_end(void *end, size_t end_size) {
+        this->end_condition = malloc(end_size);
+        mempcpy(this->end_condition, end, end_size);
+        this->end_flag = 1;
+    }
+
+    void set_step(void *step, size_t step_size) {
+        this->step = malloc(step_size);
+        memcpy(this->step, step, step_size);
+        this->step_flag = 1;
+    }
+};

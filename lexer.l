@@ -36,6 +36,7 @@ or                                          { return (OR); }                    
 and                                         { return (AND); }                       /* AND token */
 for                                         { return (FOR); }                       /* FOR token */
 while                                       { return (WHILE); }                     /* WHILE token */
+null                                        { return (NULL_T); }                      /* Null token */
 break                                       { return (BREAK); }
 continue                                    { return (CONTINUE); }
 ("\'")(.+)("\'")                            { yylval.char_value = yytext[1];

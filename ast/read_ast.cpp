@@ -17,13 +17,22 @@ int read_ast(ast *ast_value) {
     if (ast_value->condition == PROGRAM_F) {
         read_ast((ast *) ast_value->left);
     } else if (ast_value->condition == BREAK_F) {
-        return -1;
+        if (!ast_value->left_flag)
+            return -1;
+        Type *type = read_exp((ast *) ast_value->left);
+        if (type->type != INTEGER_TYPE) {
+            yyerror("INVALID BREAK");
+            return -100000;
+        }
+        return -1 * (*(int *) type->value);
     } else if (ast_value->condition == CONTINUE_F) {
         return 1;
     } else if (dynamic_cast<ast_if *>(ast_value)) {
         return if_statement_ast(dynamic_cast<ast_if *>(ast_value));
     } else if (dynamic_cast<ast_while *>(ast_value)) {
         return while_statement_ast(dynamic_cast<ast_while *>(ast_value));
+    } else if (dynamic_cast<ast_for *>(ast_value)) {
+        return for_statement_ast(dynamic_cast<ast_for *>(ast_value));
     } else if (ast_value->condition == PRINT_F) {
         // Print Info saved in left of AST
         return print((ast *) ast_value->left);
@@ -44,25 +53,64 @@ int read_ast(ast *ast_value) {
     return 0;
 }
 
+int for_statement_ast(ast_for *ast_value) {
+    ast *program = ast_value->program_flag ? (ast *) ast_value->program : NULL;
+    ast *end = ast_value->end_condition ? (ast *) ast_value->end_condition : NULL;
+    ast *start = ast_value->start_flag ? (ast *) ast_value->start : NULL;
+    ast *step = ast_value->step_flag ? (ast *) ast_value->step : NULL;
+    Type *end_result;
+    int status;
+    if (read_ast(start) < 0) {
+        yyerror("Invalid for start");
+        return -100000;
+    }
+    while (true) {
+        if (ast_value->program_flag != 0) {
+            status = read_loop_statement_ast(program);
+            if (status < 0) {
+                break;
+            }
+        }
+        if (read_ast(step) < 0) {
+            yyerror("Invalid for step");
+            return -100000;
+        }
+        if (ast_value->end_flag != 0) {
+            end_result = read_exp(end);
+            if (end_result->type != BOOLEAN_TYPE) {
+                yyerror("Invalid for condition");
+                return -100000;
+            }
+            if (!(*(bool *) end_result->value)) {
+                return 0;
+            }
+        }
+    }
+    return status + 1;
+}
+
 int while_statement_ast(ast_while *ast_value) {
     ast *program = ast_value->program_flag ? (ast *) ast_value->program : NULL;
     ast *condition = (ast *) ast_value->while_condition;
     Type *condition_result;
+    int status;
     while (true) {
         condition_result = read_exp(condition);
         if (condition_result->type != BOOLEAN_TYPE) {
-            yyerror("Invalid condition");
-            return 0;
+            yyerror("Invalid while condition");
+            return -100000;
         }
         if (!(*(bool *) condition_result->value)) {
             return 0;
         }
-        int status = read_loop_statement_ast(program);
-        if (status == -1) {
-            break;
+        if (program != NULL) {
+            status = read_loop_statement_ast(program);
+            if (status < 0) {
+                break;
+            }
         }
     }
-    return 0;
+    return status + 1;
 }
 
 int if_statement_ast(ast_if *ast_value) {
@@ -74,8 +122,8 @@ int if_statement_ast(ast_if *ast_value) {
     // Try to read if (else if) condition and get result
     Type *condition_result = read_exp((ast *) ast_value->if_condition);
     if (condition_result->type != BOOLEAN_TYPE) {
-        yyerror("Invalid condition");
-        return -1;
+        yyerror("Invalid if condition");
+        return -100000;
     }
     bool b = *(bool *) condition_result->value;
     if (b) {
@@ -139,7 +187,7 @@ Type *read_exp(ast *ast_value) {
         return not_function(type);
     }
     if (ast_value->condition == DOUBLE_F || ast_value->condition == INT_F || ast_value->condition == CHARACTER_F
-        || ast_value->condition == BOOLEAN_F) {
+        || ast_value->condition == BOOLEAN_F || ast_value->condition == NULL_F) {
         return (Type *) ast_value->left;
     }
     if (ast_value->condition == READ_CHAR_F || ast_value->condition == READ_INT_F
@@ -151,7 +199,7 @@ Type *read_exp(ast *ast_value) {
         return read_variable(ast_value);
     }
     // Variable with reference
-    // todo add vairable reference
+    // todo add variable reference
     if (ast_value->condition == VARIABLE_REF_F) {
         return read_variable(ast_value);
     }

@@ -53,9 +53,11 @@
 #define PROGRAM_F                   10039
 #define BREAK_F                     10040
 #define CONTINUE_F                  10041
+#define NULL_F                      10042
 
 // Types Flags
 #define INTEGER_TYPE                1000000
 #define DOUBLE_TYPE                 1000001
 #define CHAR_TYPE                   1000002
 #define BOOLEAN_TYPE                1000003
+#define NULL_TYPE                   1000004

@@ -15,7 +15,7 @@ int RUN_MODE = 0;
 
 void yyerror(const char *s) {
     fprintf(stdout, "$> [%d]: \"%s\"\n", get_line_number(), s);
-    if (RUN_MODE){
+    if (RUN_MODE) {
         exit(1);
     }
 }
@@ -81,6 +81,11 @@ Type *create_char(char c) {
 // Create boolean type
 Type *create_bool(int i) {
     return new Type(&i, BOOLEAN_TYPE);
+}
+
+// Create Null type
+Type *create_null() {
+    return new Type(NULL_TYPE);
 }
 
 void print_double(Type *type) {

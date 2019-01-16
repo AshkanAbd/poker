@@ -12,6 +12,7 @@ void set_line_number(int n) {
 
 int main(int argc, char **argv) {
     set_line_number(0);
+    variables = new Variable;
     if (argc > 1) {
         RUN_MODE = 1;
         yyin = fopen(argv[1], "r");
